@@ -3,12 +3,12 @@ import torch
 device = 'cpu'
 
 if device == 'gpu':
-    if torch.cuda.is_available():
-        device = torch.device("cuda")     
-    else:
-        device = torch.device("cpu")
+   if torch.cuda.is_available():
+      device = torch.device("cuda")     
+   else:
+      device = torch.device("cpu")
 else:
-    device = torch.device("cpu")
+   device = torch.device("cpu")
 
 print('Running on', device.type)
 
@@ -39,18 +39,20 @@ fname_list.append('tbs{}'.format(tbs))
 fname_list.append('ti{}'.format(ti))
 fname_list.append('rti{}'.format(rti))
 if USE_LSM:
-    ll = []
-    ll.append('LSM')
-    ll.append('SR{:d}'.format(SpecRAD))
-    ll.append('PMAX{:.3f}'.format(PMAX))
-    ll.append('Mini{}'.format('_'.join([str(_) for _ in minicol])))
-    ll.append('Macro{}'.format('_'.join([str(_) for _ in macrocol])))
-    ll.append('Alp{:.4f}'.format(ALPHA))
-    fname_list.append('--'.join(ll))
+   ll = []
+   ll.append('LSM')
+   ll.append('SR{:d}'.format(SpecRAD))
+   ll.append('PMAX{:.3f}'.format(PMAX))
+   ll.append('Mini{}'.format('_'.join([str(_) for _ in minicol])))
+   ll.append('Macro{}'.format('_'.join([str(_) for _ in macrocol])))
+   ll.append('Alp{:.4f}'.format(ALPHA))
+   fname_list.append('--'.join(ll))
 else:
-    fname_list.append('NoLSM')
+   fname_list.append('NoLSM')
 
 FNAME = '_-_'.join(fname_list)
 print(FNAME)
 
-RESULT_PATH = '.'
+RESULT_PATH = 'drive/MyDrive/TNNLS/LAST/'
+if not os.path.exists(RESULT_PATH):
+   RESULT_PATH = '.'
