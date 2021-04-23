@@ -1,3 +1,17 @@
+import torch
+
+device = 'cpu'
+
+if device == 'gpu':
+    if torch.cuda.is_available():
+        device = torch.device("cuda")     
+    else:
+        device = torch.device("cpu")
+else:
+    device = torch.device("cpu")
+
+print('Running on', device.type)
+
 REGRESSOR = 'SurrGrad' #SNN, SNN_scaled, LSM, SurrGrad
 ENCODER = 'ISI'
 

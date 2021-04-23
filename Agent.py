@@ -13,7 +13,7 @@ from NeuralEncBenchmark.multiplexing_ttfs import multiplexing_encoding_TTFS_phas
 from NeuralEncBenchmark.multiplexing_isi import multiplexing_encoding_ISI_phase
 from NeuralEncBenchmark.datasets import *
 
-from NeuralEncBenchmark.torch_device import dtype, device
+from NeuralEncBenchmark.torch_device import dtype
 from NeuralEncBenchmark.sparse_data_generator import sparse_generator
 from NeuralEncBenchmark.surrogate_encoder import encode_data
 

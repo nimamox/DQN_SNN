@@ -73,9 +73,6 @@ scale_max = {
 DQN_list = []
 n_layers = 1
 
-run_name = '{}_Conv{}_{}_LR{:.4f}_tbs{}_ti{}_rti{}_{}'.format(REGRESSOR, CONV_TYPE, ENCODER, learning_rate, tbs, ti, rti, USE_LSM and 'LSM' or 'x')
-print(run_name)
-
 for k in range(n_su):
    DQN_list.append(DQN_SANDBOX(REGRESSOR, k, dim_actions, dim_states, batch_size,
                                 reward_decay=0.9,
@@ -212,6 +209,7 @@ result = {'reward_SU': reward_SU,
           'dataRate_SU': dataRate_SU,
           'dataRate_PU': dataRate_PU,
           'elapsed': elapsed,
+          'device': device.type,
           'losses': losses,
           'conf': {'REGRESSOR': REGRESSOR,
                    'ENCODER': ENCODER,
