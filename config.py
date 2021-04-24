@@ -54,6 +54,6 @@ else:
 FNAME = '_-_'.join(fname_list)
 print(FNAME)
 
-RESULT_PATH = 'drive/MyDrive/TNNLS/LAST/'
+RESULT_PATH = '/content/drive/MyDrive/TNNLS/LAST/'
 if not os.path.exists(RESULT_PATH):
    RESULT_PATH = '.'
