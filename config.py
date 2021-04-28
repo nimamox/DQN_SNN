@@ -25,11 +25,11 @@ ti = int(os.getenv('tbs', 90))
 rti = int(os.getenv('rti', 30))
 
 USE_LSM = bool(os.getenv('LSM', 1))
-minicol = [2, 2, 2]
+   minicol = [2, 2, 2]
 macrocol = [2, 2, 2]
 SpecRAD = bool(os.getenv('SpecRAD', 0))
 PMAX = float(os.getenv('PMAX', 0.1))
-ALPHA = float(os.getenv('PMAX', 0.01))
+ALPHA = float(os.getenv('ALPHA', 0.01))
 
 fname_list = []
 fname_list.append(REGRESSOR)
