@@ -1,7 +1,7 @@
 import torch
 import os
 
-device = 'gpu'
+device = os.getenv('device', 'gpu')
 
 if device == 'gpu':
    if torch.cuda.is_available():
@@ -16,17 +16,21 @@ print('Running on', device.type)
 REGRESSOR = os.getenv('REGRESSOR', 'SurrGrad') #SNN, SNN_scaled, LSM, SurrGrad
 ENCODER = os.getenv('ENCODER', 'ISI')
 
-CONV_TYPE = int(os.getenv('CONV_TYPE', 3))
+CONV_TYPE = int(os.getenv('CONV', 3))
 
 learning_rate = float(os.getenv('LR', 0.05))
 
 tbs = int(os.getenv('tbs', 35))
-ti = int(os.getenv('tbs', 90))
+ti = int(os.getenv('ti', 90))
 rti = int(os.getenv('rti', 30))
 
 USE_LSM = bool(os.getenv('LSM', 1))
-minicol = [2, 2, 2]
-macrocol = [2, 2, 2]
+minicol = os.getenv('minicol', '2,2,2') 
+minicol = list(map(int, minicol.split(',')))
+
+macrocol = os.getenv('macrocol', '2,2,2') 
+macrocol = list(map(int, macrocol.split(',')))
+
 SpecRAD = bool(os.getenv('SpecRAD', 0))
 PMAX = float(os.getenv('PMAX', 0.1))
 ALPHA = float(os.getenv('ALPHA', 0.01))
