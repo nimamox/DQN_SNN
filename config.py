@@ -13,23 +13,23 @@ else:
 
 print('Running on', device.type)
 
-REGRESSOR = 'SurrGrad' #SNN, SNN_scaled, LSM, SurrGrad
-ENCODER = 'ISI'
+REGRESSOR = os.getenv('REGRESSOR', 'SurrGrad') #SNN, SNN_scaled, LSM, SurrGrad
+ENCODER = os.getenv('ENCODER', 'ISI')
 
-CONV_TYPE = 3
+CONV_TYPE = int(os.getenv('ENCODER', 3))
 
-learning_rate = 0.05
+learning_rate = float(os.getenv('LR', 0.05))
 
-tbs = 35
-ti = 90
-rti = 30
+tbs = int(os.getenv('tbs', 35))
+ti = int(os.getenv('tbs', 90))
+rti = int(os.getenv('rti', 30))
 
-USE_LSM = True
+USE_LSM = bool(os.getenv('LSM', 1))
 minicol = [2, 2, 2]
 macrocol = [2, 2, 2]
-SpecRAD = False
-PMAX = .1
-ALPHA = .01
+SpecRAD = bool(os.getenv('SpecRAD', 0))
+PMAX = float(os.getenv('PMAX', 0.1))
+ALPHA = float(os.getenv('PMAX', 0.01))
 
 fname_list = []
 fname_list.append(REGRESSOR)
