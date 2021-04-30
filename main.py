@@ -10,16 +10,12 @@ import random
 
 from config import *
 
-
 def set_seed(seed):
    torch.manual_seed(seed)
    np.random.seed(seed)
    random.seed(seed)
 
 set_seed(1337)
-
-n_channel = 4
-n_su = 6
 
 dim_actions = n_channel * 2  # The action space size
 dim_states = n_channel + 1  # The sensing result space

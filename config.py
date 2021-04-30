@@ -1,5 +1,8 @@
 import torch
-import os
+import os, sys
+
+n_channel = 4
+n_su = 6
 
 device = os.getenv('device', 'gpu')
 
@@ -25,11 +28,11 @@ ti = int(os.getenv('ti', 90))
 rti = int(os.getenv('rti', 30))
 
 USE_LSM = bool(os.getenv('LSM', 1))
-minicol = os.getenv('minicol', '2,2,2') 
-minicol = list(map(int, minicol.split(',')))
+minicol = os.getenv('minicol', '2-2-2') 
+minicol = list(map(int, minicol.split('-')))
 
-macrocol = os.getenv('macrocol', '2,2,2') 
-macrocol = list(map(int, macrocol.split(',')))
+macrocol = os.getenv('macrocol', '2-2-2') 
+macrocol = list(map(int, macrocol.split('-')))
 
 SpecRAD = bool(os.getenv('SpecRAD', 0))
 PMAX = float(os.getenv('PMAX', 0.1))
@@ -61,3 +64,7 @@ print(FNAME)
 RESULT_PATH = '/content/drive/MyDrive/TNNLS/LAST/'
 if not os.path.exists(RESULT_PATH):
    RESULT_PATH = '.'
+   
+if os.path.exists(os.path.join(RESULT_PATH, '{}_PU{}_SU{}.hkl'.format(FNAME, n_channel, n_su))):
+   print('Already had executed this configuration. Exiting...')
+   sys.exit(1)
