@@ -16,8 +16,8 @@ else:
 
 print('Running on', device.type)
 
-REGRESSOR = os.getenv('REGRESSOR', 'SurrGrad') #SNN, SNN_scaled, LSM, SurrGrad
-ENCODER = os.getenv('ENCODER', 'ISI')
+REGRESSOR = os.getenv('REGRESSOR', 'SurrGrad').replace("'","") #SNN, SNN_scaled, LSM, SurrGrad
+ENCODER = os.getenv('ENCODER', 'ISI').replace("'","")
 
 CONV_TYPE = int(os.getenv('CONV', '3').replace("'",""))
 
