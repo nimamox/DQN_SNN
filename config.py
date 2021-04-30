@@ -19,24 +19,29 @@ print('Running on', device.type)
 REGRESSOR = os.getenv('REGRESSOR', 'SurrGrad') #SNN, SNN_scaled, LSM, SurrGrad
 ENCODER = os.getenv('ENCODER', 'ISI')
 
-CONV_TYPE = int(os.getenv('CONV', 3))
+CONV_TYPE = int(os.getenv('CONV', '3').replace("'",""))
 
-learning_rate = float(os.getenv('LR', 0.05))
+learning_rate = float(os.getenv('LR', '0.05').replace("'",""))
 
-tbs = int(os.getenv('tbs', 35))
-ti = int(os.getenv('ti', 90))
-rti = int(os.getenv('rti', 30))
+tbs = int(os.getenv('tbs', '35').replace("'",""))
+ti = int(os.getenv('ti', '90').replace("'",""))
+rti = int(os.getenv('rti', '30').replace("'",""))
 
-USE_LSM = bool(os.getenv('LSM', 1))
-minicol = os.getenv('minicol', '2-2-2') 
+USE_LSM = bool(int(os.getenv('LSM', '1').replace("'","")))
+minicol = os.getenv('minicol', '2-2-2').replace("'","")
 minicol = list(map(int, minicol.split('-')))
 
-macrocol = os.getenv('macrocol', '2-2-2') 
+macrocol = os.getenv('macrocol', '2-2-2').replace("'","") 
 macrocol = list(map(int, macrocol.split('-')))
 
-SpecRAD = bool(os.getenv('SpecRAD', 0))
-PMAX = float(os.getenv('PMAX', 0.1))
-ALPHA = float(os.getenv('ALPHA', 0.01))
+SpecRAD = bool(int(os.getenv('SpecRAD', '0').replace("'","")))
+PMAX = float(os.getenv('PMAX', '0.1').replace("'",""))
+ALPHA = float(os.getenv('ALPHA', '0.01').replace("'",""))
+
+print('REGRESSOR', REGRESSOR, 'ENCODER', ENCODER, 'CONV_TYPE', CONV_TYPE, 'learning_rate',
+      learning_rate, 'tbs', tbs, 'ti', ti, 'rti', rti, 'USE_LSM',
+      USE_LSM, 'minicol', minicol, 'macrocol', macrocol, 'SpecRAD', SpecRAD,
+      'PMAX', PMAX, 'ALPHA', ALPHA)
 
 fname_list = []
 fname_list.append(REGRESSOR)
@@ -63,7 +68,7 @@ print(FNAME)
 
 RESULT_PATH = '/content/drive/MyDrive/TNNLS/LAST/'
 if not os.path.exists(RESULT_PATH):
-   RESULT_PATH = '.'
+   RESULT_PATH = './results/'
    
 if os.path.exists(os.path.join(RESULT_PATH, '{}_PU{}_SU{}.hkl'.format(FNAME, n_channel, n_su))):
    print('Already had executed this configuration. Exiting...')
