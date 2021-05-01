@@ -73,3 +73,6 @@ if not os.path.exists(RESULT_PATH):
 if os.path.exists(os.path.join(RESULT_PATH, '{}_PU{}_SU{}.hkl'.format(FNAME, n_channel, n_su))):
    print('Already had executed this configuration. Exiting...')
    sys.exit(1)
+   
+with open(os.path.join(RESULT_PATH, '{}_PU{}_SU{}.hkl'.format(FNAME, n_channel, n_su)), 'wb') as fo:
+   fo.write('X'.encode("ascii"))
