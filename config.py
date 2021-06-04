@@ -16,27 +16,41 @@ else:
 
 print('Running on', device.type)
 
-REGRESSOR = os.getenv('REGRESSOR', 'SurrGrad').replace("'","") #SNN, SNN_scaled, LSM, SurrGrad
-ENCODER = os.getenv('ENCODER', 'ISI').replace("'","")
+def get_slurm_env(type_, name, default):
+   res = os.getenv(name, str(default)).replace("'","")
+   if type_ == 'int':
+      res = int(res)
+   elif type_ == 'float':
+      res = float(res)
+   elif type_ == 'bool':
+      res = bool(res)
+   return res
 
-CONV_TYPE = int(os.getenv('CONV', '3').replace("'",""))
+REGRESSOR = get_slurm_env('str', 'REGRESSOR', 'SurrGrad') #SNN, SNN_scaled, LSM, SurrGrad
+ENCODER = get_slurm_env('str', 'ENCODER', 'ISI')
 
-learning_rate = float(os.getenv('LR', '0.05').replace("'",""))
+CONV_TYPE = get_slurm_env('int', 'CONV', 3)
 
-tbs = int(os.getenv('tbs', '35').replace("'",""))
-ti = int(os.getenv('ti', '90').replace("'",""))
-rti = int(os.getenv('rti', '30').replace("'",""))
+learning_rate = get_slurm_env('float', 'LR', '0.05')
 
-USE_LSM = bool(int(os.getenv('LSM', '1').replace("'","")))
-minicol = os.getenv('minicol', '2-2-2').replace("'","")
+tbs = get_slurm_env('int', 'tbs', 35)
+ti = get_slurm_env('int', 'ti', 90)
+rti = get_slurm_env('int', 'rti', 30)
+
+USE_LSM = get_slurm_env('bool', 'LSM', 1)
+
+minicol = get_slurm_env('str', 'minicol', '2-2-2')
 minicol = list(map(int, minicol.split('-')))
 
-macrocol = os.getenv('macrocol', '2-2-2').replace("'","") 
+macrocol = get_slurm_env('str', 'macrocol', '2-2-2')
 macrocol = list(map(int, macrocol.split('-')))
 
-SpecRAD = bool(int(os.getenv('SpecRAD', '0').replace("'","")))
-PMAX = float(os.getenv('PMAX', '0.1').replace("'",""))
-ALPHA = float(os.getenv('ALPHA', '0.01').replace("'",""))
+SpecRAD = get_slurm_env('bool', 'SpecRAD', 0)
+PMAX = get_slurm_env('float', 'PMAX', '0.1')
+ALPHA = get_slurm_env('float', 'ALPHA', '0.01')
+
+readout_inp = get_slurm_env('int', 'readoutinp', '32')
+readout_out = get_slurm_env('int', 'readoutout', '16')
 
 print('REGRESSOR', REGRESSOR, 'ENCODER', ENCODER, 'CONV_TYPE', CONV_TYPE, 'learning_rate',
       learning_rate, 'tbs', tbs, 'ti', ti, 'rti', rti, 'USE_LSM',
@@ -59,6 +73,8 @@ if USE_LSM:
    ll.append('Mini{}'.format('_'.join([str(_) for _ in minicol])))
    ll.append('Macro{}'.format('_'.join([str(_) for _ in macrocol])))
    ll.append('Alp{:.4f}'.format(ALPHA))
+   ll.append('lsminp{}'.format(readout_inp))
+   ll.append('lsmout{}'.format(readout_out))
    fname_list.append('--'.join(ll))
 else:
    fname_list.append('NoLSM')
@@ -74,5 +90,5 @@ if os.path.exists(os.path.join(RESULT_PATH, '{}_PU{}_SU{}.hkl'.format(FNAME, n_c
    print('Already had executed this configuration. Exiting...')
    sys.exit(1)
    
-with open(os.path.join(RESULT_PATH, '{}_PU{}_SU{}.hkl'.format(FNAME, n_channel, n_su)), 'wb') as fo:
-   fo.write('X'.encode("ascii"))
+#with open(os.path.join(RESULT_PATH, '{}_PU{}_SU{}.hkl'.format(FNAME, n_channel, n_su)), 'wb') as fo:
+   #fo.write('X'.encode("ascii"))

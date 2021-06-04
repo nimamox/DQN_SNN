@@ -91,10 +91,10 @@ class Three_Layer_SNN(nn.Module):
       super().__init__()
       self.linear1 = MAC_Crossbar(param['dim_in'], param['dim_h'], param['W_std1'])
       self.neuron1 = LIFNeuron(param['dim_h'], param['Rd'], param['Cm'],
-                                 param['Rs'], param['Vth'], param['V_reset'], param['dt'])
+                               param['Rs'], param['Vth'], param['V_reset'], param['dt'])
       self.linear2 = MAC_Crossbar(param['dim_h'], param['dim_out'], param['W_std2'])
       self.neuron2 = LIFNeuron(param['dim_out'], param['Rd'], param['Cm'], 
-                                 param['Rs'], param['Vth']*20, param['V_reset'], param['dt'])
+                               param['Rs'], param['Vth']*20, param['V_reset'], param['dt'])
 
    def forward(self, input_vector):
       out_vector = self.linear1(input_vector)
@@ -151,11 +151,58 @@ def Poisson_encoder(x, T_sim):
       out_spike[:,:,t] = Poisson_encoding(x)
    return out_spike.to(device)
 
+
+class InputLayer(nn.Module):
+   def __init__(self, N, dim_input, dim_output, weight=100.0):
+      super().__init__()
+
+      pre = np.arange(dim_input * N) % dim_input
+      post = (
+         np.random.permutation(max(dim_input, dim_output) * N)[: dim_input * N]
+           % dim_output
+      )
+      i = torch.LongTensor(np.vstack((pre, post)))
+      v = torch.ones(dim_input * N) * weight
+
+      # Save the transpose version of W for sparse-dense multiplication
+      self.W_t = torch.sparse.FloatTensor(
+         i, v, torch.Size((dim_input, dim_output))
+           ).t()
+
+   def forward(self, x):
+      return self.W_t.mm(x.t()).t()
+
+   def _apply(self, fn):
+      super()._apply(fn)
+      self.W_t = fn(self.W_t)
+      return self
+
+class ReadoutLayer(nn.Module):
+   def __init__(self, reservoir_size, dim_input, dim_output):
+      super().__init__()
+      self.pre = np.random.permutation(np.arange(reservoir_size))[:dim_input]
+      self.post = np.arange(dim_input) % dim_output
+      i = torch.LongTensor(np.vstack((self.pre, self.post)))
+      v = torch.ones(i.shape[1])
+      self.W_t = torch.sparse.FloatTensor(
+         i, v, torch.Size((reservoir_size, dim_output))
+           ).t()
+   def forward(self, x):
+      res = self.W_t.mm(x.t()).t()
+      res[res > .5] = 1
+      return res
+
+   def _apply(self, fn):
+      super()._apply(fn)
+      self.W_t = fn(self.W_t)
+      return self
+
+
 class DQN_SANDBOX():
    def __init__(self, 
-                 regressor,
-               agent_id,
-                 n_actions,
+                regressor,
+                 agent_id,
+               n_actions,
                  n_features,
                  memory_size,
                  reward_decay=0.9,
@@ -212,24 +259,29 @@ class DQN_SANDBOX():
 
       if USE_LSM:
          topology = SmallWorldTopology(
-               SmallWorldTopology.Configuration(
-             minicolumn_shape=minicol,
-              macrocolumn_shape=macrocol,
-              p_max=PMAX,
-              # minicolumn_spacing=1460,
-              # intracolumnar_sparseness=635.0,
-              # neuron_spacing=40.0,
-              spectral_radius_norm=SpecRAD,
-              inhibitory_init_weight_range=(0.1, 0.3),
-              excitatory_init_weight_range=(0.2, 0.5),
-          )
-            )
+            SmallWorldTopology.Configuration(
+                  minicolumn_shape=minicol,
+                  macrocolumn_shape=macrocol,
+                  p_max=PMAX,
+                  # minicolumn_spacing=1460,
+                  # intracolumnar_sparseness=635.0,
+                  # neuron_spacing=40.0,
+                  spectral_radius_norm=SpecRAD,
+                  inhibitory_init_weight_range=(0.1, 0.3),
+                  excitatory_init_weight_range=(0.2, 0.5),
+               )
+         )
          lsm_N = topology.number_of_nodes()
          N_inputs = 5
          if CONV_TYPE == 3:
             N_inputs = 6
          self.reservoir = PCritical(1, topology, alpha=ALPHA).to(device)
-         self.lsm = torch.nn.Sequential(OneToNLayer(1, N_inputs, lsm_N), self.reservoir).to(device)
+         #self.lsm = torch.nn.Sequential(OneToNLayer(1, N_inputs, lsm_N), self.reservoir).to(device)
+         self.lsm = torch.nn.Sequential(InputLayer(1, N_inputs, lsm_N),
+                                        self.reservoir,
+                                        ReadoutLayer(lsm_N, readout_inp, readout_out)
+                                        ).to(device)
+
 
       if self.regressor == 'LinReg':
          self.eval_net =  LinReg(self.n_features, self.n_actions)
@@ -263,10 +315,10 @@ class DQN_SANDBOX():
 
       elif self.regressor.startswith('SNN'):
          self.snn_params = {
-               'seed': 1337,
+            'seed': 1337,
 
-          'Rd': 5.0e3,    # this device resistance is mannually set for smaller leaky current?
-        'Cm': 3.0e-6,   # real capacitance is absolutely larger than this value
+               'Rd': 5.0e3,    # this device resistance is mannually set for smaller leaky current?
+          'Cm': 3.0e-6,   # real capacitance is absolutely larger than this value
         'Rs': 1.0,      # this series resistance value is mannually set for larger inject current?
 
         'Vth': 0.8,     # this is the real device threshould voltage
@@ -281,7 +333,7 @@ class DQN_SANDBOX():
 
         'W_std1': 1.0,
         'W_std2': 1.0,
-            }
+         }
 
          if USE_LSM:
             self.snn_params['dim_in'] = lsm_N
@@ -322,7 +374,7 @@ class DQN_SANDBOX():
             obs_spikes.append(S)
          self.obs_spikes = torch.stack(obs_spikes, dim=2)
          obs_spikes_reshaped = self.obs_spikes.detach().reshape(self.obs_spikes.shape[1], 
-                                                                   self.obs_spikes.shape[2])
+                                                                self.obs_spikes.shape[2])
          if self.regressor == 'SurrGrad':
             self.obs_spikes = torch.einsum('ijk->ikj', self.obs_spikes)
             self.all_obs_spikes.append(torch.einsum('ij->ji', obs_spikes_reshaped))
@@ -333,7 +385,7 @@ class DQN_SANDBOX():
          observation = self.convert_state_scaled(observation)
          self.obs_spikes = self.SEncoding(observation)
          obs_spikes_reshaped = self.obs_spikes.detach().reshape(self.obs_spikes.shape[1], 
-                                                                   self.obs_spikes.shape[2])
+                                                                self.obs_spikes.shape[2])
          if self.regressor == 'SurrGrad':
             self.obs_spikes = torch.einsum('ijk->ikj', self.obs_spikes)
             self.all_obs_spikes.append(torch.einsum('ij->ji', obs_spikes_reshaped))
@@ -417,12 +469,12 @@ class DQN_SANDBOX(DQN_SANDBOX):
 
    def run_surr_grad_snn(self, network, inp_spike):
       surr_out, _ = run_snn(inp_spike, inp_spike.shape[0], 
-                              self.snn_params['T_sim'], network, self.surr_alpha, self.surr_beta)
+                            self.snn_params['T_sim'], network, self.surr_alpha, self.surr_beta)
       return surr_out.sum(1)
 
    def learn_snn(self, episode_size, step, 
-                  training_batch_size = 50, training_iteration = 100, replace_target_iter = 25,
-                debug=False, seed=1337, opt_cb=None):
+                 training_batch_size = 50, training_iteration = 100, replace_target_iter = 25,
+                  debug=False, seed=1337, opt_cb=None):
       method = 'double'
       sequential = False
       nForget = 50
@@ -500,7 +552,7 @@ class DQN_SANDBOX(DQN_SANDBOX):
          elif (method == 'double'):
             for index in range(len(eval_act_index)):
                q_target[index, eval_act_index[index]] = reward[index] + \
-                       self.gamma * q_next[index, next_action[index]]
+                  self.gamma * q_next[index, next_action[index]]
          self.optimizer.zero_grad()
 
          if i == training_iteration:
