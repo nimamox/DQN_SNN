@@ -37,6 +37,8 @@ tbs = get_slurm_env('int', 'tbs', 35)
 ti = get_slurm_env('int', 'ti', 90)
 rti = get_slurm_env('int', 'rti', 30)
 
+hidden = get_slurm_env('int', 'hidden', 10)
+
 USE_LSM = get_slurm_env('bool', 'LSM', 1)
 
 minicol = get_slurm_env('str', 'minicol', '2-2-2')
@@ -55,7 +57,8 @@ readout_out = get_slurm_env('int', 'readoutout', '16')
 print('REGRESSOR', REGRESSOR, 'ENCODER', ENCODER, 'CONV_TYPE', CONV_TYPE, 'learning_rate',
       learning_rate, 'tbs', tbs, 'ti', ti, 'rti', rti, 'USE_LSM',
       USE_LSM, 'minicol', minicol, 'macrocol', macrocol, 'SpecRAD', SpecRAD,
-      'PMAX', PMAX, 'ALPHA', ALPHA)
+      'PMAX', PMAX, 'ALPHA', ALPHA, 'READ_INP', readout_inp,
+      'READ_OUT', readout_out, 'HIDDEN', hidden)
 
 fname_list = []
 fname_list.append(REGRESSOR)
@@ -75,6 +78,7 @@ if USE_LSM:
    ll.append('Alp{:.4f}'.format(ALPHA))
    ll.append('lsminp{}'.format(readout_inp))
    ll.append('lsmout{}'.format(readout_out))
+   ll.append('hidden{}'.format(hidden))
    fname_list.append('--'.join(ll))
 else:
    fname_list.append('NoLSM')
@@ -90,5 +94,5 @@ if os.path.exists(os.path.join(RESULT_PATH, '{}_PU{}_SU{}.hkl'.format(FNAME, n_c
    print('Already had executed this configuration. Exiting...')
    sys.exit(1)
    
-#with open(os.path.join(RESULT_PATH, '{}_PU{}_SU{}.hkl'.format(FNAME, n_channel, n_su)), 'wb') as fo:
-   #fo.write('X'.encode("ascii"))
+with open(os.path.join(RESULT_PATH, '{}_PU{}_SU{}.hkl'.format(FNAME, n_channel, n_su)), 'wb') as fo:
+   fo.write('X'.encode("ascii"))
