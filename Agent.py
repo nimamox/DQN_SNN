@@ -299,7 +299,7 @@ class DQN_SANDBOX():
       elif self.regressor == 'SurrGrad':
          self.snn_params = {}
          if USE_LSM:
-            self.snn_params['dim_in'] = lsm_N
+            self.snn_params['dim_in'] = readout_out
          else:
             self.snn_params['dim_in'] = 5
             if CONV_TYPE == 3:
@@ -336,7 +336,7 @@ class DQN_SANDBOX():
          }
 
          if USE_LSM:
-            self.snn_params['dim_in'] = lsm_N
+            self.snn_params['dim_in'] = readout_out
          else:
             self.snn_params['dim_in'] = 5
             if CONV_TYPE == 3:
