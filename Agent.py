@@ -306,7 +306,7 @@ class DQN_SANDBOX():
                self.snn_params['dim_in'] = 6
 
          self.snn_params['T_sim'] = 10
-         self.eval_net, self.surr_alpha, self.surr_beta = init_model(self.snn_params['dim_in'], 10, 8, .05)
+         self.eval_net, self.surr_alpha, self.surr_beta = init_model(self.snn_params['dim_in'], hidden, 8, .05)
          self.target_net = []
          for vv in self.eval_net:
             self.target_net.append(vv.clone())
@@ -327,7 +327,7 @@ class DQN_SANDBOX():
         'dt': 1.0e-6,   # every time step is dt, in the one-order differential equation of neuron
         'T_sim': 10,   # could control total spike number collected
         'dim_in': 5,
-        'dim_h': 10,
+        'dim_h': hidden,
         'dim_out': 8,
         'epoch': 10,
 
