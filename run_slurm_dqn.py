@@ -42,7 +42,7 @@ for rl_type in ['PG', 'DQN']:
       for lsm in [0, 1]:
         if not lsm:
           confDicts.append(hashabledict({
-            'rltype': rl_type,
+            'rl_type': rl_type,
             'regressor': regressor,
             'conv': conv,
             'encoder': encoder,
@@ -68,7 +68,7 @@ for rl_type in ['PG', 'DQN']:
                     for specrad in [0]:
                       for alpha in [.01, .1]:
                         confDicts.append(hashabledict({
-                          'rltype': rl_type,
+                          'rl_type': rl_type,
                           'regressor': regressor,
                           'conv': conv,
                           'encoder': encoder,
