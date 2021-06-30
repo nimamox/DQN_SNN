@@ -4,7 +4,7 @@ import numpy as np
 import random
 
 from DSA_env import DSA_Period
-from Agent import DQN_SANDBOX
+from Agent import RL_Agent
 import hickle as hkl 
 import random
 
@@ -59,23 +59,23 @@ for k in range(n_su):
 
 ### Instantiate Agents
 scale_max = {
-   0: [0.00038551720920229464, 0.0066595179050588805, 0.00027474271047131434, 0.0002726297874581597],
+    0: [0.00038551720920229464, 0.0066595179050588805, 0.00027474271047131434, 0.0002726297874581597],
     1: [0.0014953893134123765, 0.5025908280384527, 0.00026904287086142257, 0.0002666098921720822],
     2: [0.0007029372157025171,0.9760727993647771, 0.0002707082455349926, 0.0002689885512201969],
- 3: [0.00027025116831491577, 0.00027619702276382267, 0.008420839450478347, 0.0007813210974455475],
- 4: [0.00028426019685187995, 0.00068141830168986, 0.0002791359607607724, 0.0002827171490683201],
- 5: [0.0002657011093071127, 0.00026646264526990286, 0.00040543780016436025, 0.05408355764945355]}
+    3: [0.00027025116831491577, 0.00027619702276382267, 0.008420839450478347, 0.0007813210974455475],
+    4: [0.00028426019685187995, 0.00068141830168986, 0.0002791359607607724, 0.0002827171490683201],
+    5: [0.0002657011093071127, 0.00026646264526990286, 0.00040543780016436025, 0.05408355764945355]}
 
-DQN_list = []
+Agents_list = []
 n_layers = 1
 
 for k in range(n_su):
-   DQN_list.append(DQN_SANDBOX(REGRESSOR, k, dim_actions, dim_states, batch_size,
-                                reward_decay=0.9,
-                                e_greedy= e_greedy_start,
-                                lr = learning_rate
-                      ))
-   DQN_list[k].scale_max = np.array(scale_max[k])
+   Agents_list.append(RL_Agent(k, dim_actions, dim_states, batch_size,
+                            reward_decay=0.9,
+                            e_greedy= e_greedy_start,
+                            lr = learning_rate
+                            ))
+   Agents_list[k].scale_max = np.array(scale_max[k])
 
 ### Simulation
 tic = time.time()
@@ -86,10 +86,9 @@ init_step = 0
 observation = env.sense(active_sensor, init_step)
 
 
-
 if REGRESSOR not in ['LinReg', 'MLP']:
    for k in range(n_su):
-      DQN_list[k].spike_encoder(observation[k,:], step=init_step)
+      Agents_list[k].spike_encoder(observation[k,:], step=init_step)
 
 recorded_actions = []
 
@@ -99,7 +98,7 @@ for step in range(init_step, total_episode):
    # SU choose action based on observation
    action = np.zeros(n_su).astype(np.int32)
    for k in range(n_su):
-      action[k] = DQN_list[k].choose_action(observation[k,:])
+      action[k] = Agents_list[k].choose_action(observation[k,:])
 
    recorded_actions.append(action.copy())
    # SU take action and get the reward
@@ -131,7 +130,7 @@ for step in range(init_step, total_episode):
       observation_ = env.sense(active_sensor, step+1)
       if REGRESSOR not in ['LinReg', 'MLP']:
          for k in range(n_su):
-            DQN_list[k].spike_encoder(observation_[k,:], step+1)
+            Agents_list[k].spike_encoder(observation_[k,:], step+1)
 
    # Store one episode (s, a, r, s')
    for k in range(n_su):
@@ -141,7 +140,7 @@ for step in range(init_step, total_episode):
       else:
          state = observation[k, :]
          state_ = observation_[k, :]
-      DQN_list[k].store_transition(state, action[k], reward[k], state_)
+      Agents_list[k].store_transition(state, action[k], reward[k], state_)
 
    # Each SU learns their DQN model
    if ((step + 1) % (batch_size) == 0):
@@ -149,20 +148,31 @@ for step in range(init_step, total_episode):
       #   break
       # if step == ((4*300)-1):
       #   break
-      print("Losses:[", end='')
-      for k in range(n_su):
-         if REGRESSOR in ['LinReg', 'MLP']:
-            DQN_list[k].learn_conventional(batch_size, step, 'normal')
-         elif REGRESSOR in ['SNN', 'SNN_scaled', 'LSM', 'SurrGrad']:
-            ll = DQN_list[k].learn_snn(batch_size, step, training_batch_size = tbs, 
-                                           training_iteration = ti, replace_target_iter = rti)
-            print('%.4f' % ll, end='\t')
-         else:
-            raise Exception('Invalid regressor')
-         DQN_list[k].epsilon = epsilon[k]
-      print("]")
-      if (epsilon[k] >= 0.8):
-         DQN_list[k].update_lr(0.01)
+      if RLTYPE == 'PG':
+         for k in range(n_su):
+            if REGRESSOR in ['LinReg', 'MLP']:
+               Agents_list[k].learn_PG_conventional()
+            elif REGRESSOR in ['SNN', 'SNN_scaled', 'LSM', 'SurrGrad']:
+               Agents_list[k].learn_PG_snn(step)
+            else:
+               raise Exception('Invalid regressor')            
+      elif RLTYPE == 'DQN':
+         #print("Losses:[", end='')
+         for k in range(n_su):
+            if REGRESSOR in ['LinReg', 'MLP']:
+               Agents_list[k].learn_conventional(batch_size, step, 'normal')
+            elif REGRESSOR in ['SNN', 'SNN_scaled', 'LSM', 'SurrGrad']:
+               ll = Agents_list[k].learn_snn(step, training_batch_size = tbs, 
+                                              training_iteration = ti, replace_target_iter = rti)
+               #print('%.4f' % ll, end='\t')
+            else:
+               raise Exception('Invalid regressor')
+            Agents_list[k].epsilon = epsilon[k]
+            if (epsilon[k] >= 0.8):
+               Agents_list[k].update_lr(0.01)              
+         #print("]")
+      else:
+         raise Exception('Invalid RLTYPE')
 
    if ((step+1) % (1*batch_size) == 0):
       index = np.arange(step+1-batch_size, step+1)
@@ -178,14 +188,17 @@ for step in range(init_step, total_episode):
       elapsed = time.time() - tic
       print('Elapsed time = %.4f sec' % elapsed)
       print('-'*20)
-
-   # Update epsilon
-   if ((step + 1) % epsilon_update_period == 0):
-      print('Epsilon:', min(1, epsilon[k] + e_increase))
-      for k in range(n_su):
-         #epsilon[k] = min(1, epsilon[k] + 0.1)
-         epsilon[k] = min(1, epsilon[k] + e_increase)
-         #print('SU %d epsilon update to %.3f' % (k+1, epsilon[k]))
+ 
+   if RLTYPE == 'PG':
+      pass
+   elif RLTYPE == 'DQN':
+      # Update epsilon
+      if ((step + 1) % epsilon_update_period == 0):
+         print('Epsilon:', min(1, epsilon[k] + e_increase))
+         for k in range(n_su):
+            #epsilon[k] = min(1, epsilon[k] + 0.1)
+            epsilon[k] = min(1, epsilon[k] + e_increase)
+            #print('SU %d epsilon update to %.3f' % (k+1, epsilon[k]))
 
    # swap observation
    observation = observation_
@@ -193,7 +206,7 @@ for step in range(init_step, total_episode):
 elapsed = time.time() - tic
 
 
-losses = np.stack([DQN_list[k].cost_his for k in range(n_su)])
+losses = np.stack([Agents_list[k].cost_his for k in range(n_su)])
 
 result = {'reward_SU': reward_SU,
           'access_PU': access_PU,
@@ -207,20 +220,7 @@ result = {'reward_SU': reward_SU,
           'elapsed': elapsed,
           'device': device.type,
           'losses': losses,
-          'conf': {'REGRESSOR': REGRESSOR,
-                   'ENCODER': ENCODER,
-                   'CONV_TYPE': CONV_TYPE,
-                   'learning_rate': learning_rate,
-                   'tbs': tbs,
-                   'ti': ti,
-                   'rti': rti,
-                   'USE_LSM': USE_LSM,
-                   'minicol': minicol,
-                   'macrocol': macrocol,
-                   'SpecRAD': SpecRAD,
-                   'PMAX': PMAX,
-                   'ALPHA': ALPHA
-                   }
+          'conf': conf
           }
 
 hkl.dump(result, os.path.join(RESULT_PATH, '{}_PU{}_SU{}.hkl'.format(FNAME, n_channel, n_su)))
