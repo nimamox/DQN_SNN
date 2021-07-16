@@ -4,6 +4,7 @@ import platform
 
 #os.environ["LSM"] = '0'
 #os.environ["REGRESSOR"] = 'SNN'
+#os.environ["ent_coef"] = '0.05'
 
 n_channel = 4
 n_su = 6
@@ -60,6 +61,9 @@ elif RLTYPE == 'PG':
    pgepochs= get_slurm_env('int', 'pgepochs', 5)
    fname_list.append('09pgepochs{}'.format(pgepochs))
    conf['pgepochs'] = pgepochs
+   ent_coef= get_slurm_env('float', 'ent_coef', 0)
+   fname_list.append('19ent_coef{}'.format(ent_coef))
+   conf['ent_coef'] = ent_coef
 else:
    raise Exception('invalid RLTYPE')
 

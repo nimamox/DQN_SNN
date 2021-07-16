@@ -9,7 +9,6 @@ import time
 from torch import nn
 import torch.nn.functional as F
 
-
 import NeuralEncBenchmark
 from NeuralEncBenchmark.ttfs import TTFS_encoder
 from NeuralEncBenchmark.isi import ISI_encoding
@@ -451,15 +450,32 @@ class RL_Agent(RL_Agent):
    def learn_PG_conventional(self):
       discounted_pg_rewards_norm = self._pg_discount_norm_rewards()
 
-      self.optimizer.zero_grad()
-
       self.pg_observations = np.vstack(self.pg_observations)
 
       for ep in range(pgepochs):
+         self.optimizer.zero_grad()
          logits = self.policy_net(torch.Tensor(self.pg_observations))
-         logp = Categorical(logits=logits).log_prob(torch.FloatTensor(self.pg_actions))
-         loss = -(logp * torch.FloatTensor(self.pg_rewards)).mean()
-         loss.backward()
+         # Old PG loss (identical)
+         #logp = Categorical(logits=logits).log_prob(torch.FloatTensor(self.pg_actions))
+         #loss = -(logp * torch.FloatTensor(self.pg_rewards)).mean()
+         #loss = -(logp * torch.FloatTensor(discounted_pg_rewards_norm.copy())).mean()
+         
+         # PG loss
+         cross_ent = F.nll_loss(F.log_softmax(logits), 
+                                target=torch.LongTensor(self.pg_actions), 
+                                reduction="none")
+         pg_loss = torch.sum(cross_ent * torch.FloatTensor(discounted_pg_rewards_norm.copy()))
+         
+         # Entropy loss
+         if ent_coef:
+            policy = F.softmax(logits, dim=-1)
+            log_policy = F.log_softmax(logits, dim=-1)
+            entropy_loss = torch.sum(policy * log_policy)
+            total_loss = pg_loss + ent_coef * entropy_loss
+         else:
+            total_loss = pg_loss
+         
+         total_loss.backward()
          self.optimizer.step()
 
       self.pg_actions, self.pg_observations, self.pg_rewards = [], [], []
@@ -550,21 +566,31 @@ class RL_Agent(RL_Agent):
 
    def learn_PG_snn(self, step):
       discounted_pg_rewards_norm = self._pg_discount_norm_rewards()
-
-      self.optimizer.zero_grad()
       
       spike_inp = torch.stack(self.all_obs_spikes, dim=0)[:-1,:,:]
 
       self.pg_observations = np.vstack(self.pg_observations)
       
       for ep in range(pgepochs):
+         self.optimizer.zero_grad()
          if REGRESSOR == 'SurrGrad':
             logits = self.run_surr_grad_snn(self.policy_net, spike_inp)
          elif REGRESSOR == 'SNN':
             logits = self.run_ncomm_snn(self.policy_net, spike_inp)
-         logp = Categorical(logits=logits).log_prob(torch.FloatTensor(self.pg_actions))
-         loss = -(logp * torch.FloatTensor(self.pg_rewards)).mean()
-         loss.backward()
+         cross_ent = F.nll_loss(F.log_softmax(logits), 
+                                target=torch.LongTensor(self.pg_actions), 
+                                reduction="none")
+         pg_loss = torch.sum(cross_ent * torch.FloatTensor(discounted_pg_rewards_norm.copy()))
+         # Entropy loss
+         if ent_coef:
+            policy = F.softmax(logits, dim=-1)
+            log_policy = F.log_softmax(logits, dim=-1)
+            entropy_loss = torch.sum(policy * log_policy)
+            total_loss = pg_loss + ent_coef * entropy_loss
+         else:
+            total_loss = pg_loss         
+            
+         total_loss.backward()
          self.optimizer.step()
 
       self.pg_actions, self.pg_observations, self.pg_rewards = [], [], []

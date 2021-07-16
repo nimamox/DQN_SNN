@@ -21,7 +21,8 @@ def pending():
 #rl_type = 'PG' # DQN, PG
 regressor = 'SNN'
 conv = 3
-geomS = ['1-1-1', '2-2-2', '3-3-1', '3-3-3']
+geomMini = ['2-2-2', '3-3-3', '4-4-2']
+geomMacro = ['1-1-1', '2-1-1', '2-2-1', '2-2-2']
 pmaxS = [.05, .1]
 #train_params = [
                  ##{'tbs': 35, 'ti': 90, 'rti': 30},
@@ -34,9 +35,9 @@ tp = {'tbs': 100, 'ti': 50, 'rti': 25}
 confDicts = []
 
 lr = .005
-hidden = 10
+hidden = 20
 
-for rl_type in ['PG', 'DQN']:
+for rl_type in ['PG']: #, 'DQN'
   for pgepochs in [1, 5]:
     for encoder in ['ISI', 'Poisson']:
       for lsm in [0, 1]:
@@ -56,9 +57,9 @@ for rl_type in ['PG', 'DQN']:
           })) 
         else:
           for pmax in pmaxS:
-            for macrocol in geomS:
+            for macrocol in geomMacro:
               macSize = np.prod(list(map(int, macrocol.split('-'))))
-              for minicol in geomS:
+              for minicol in geomMini:
                 minSize = np.prod(list(map(int, minicol.split('-'))))
                 reservoir_size = minSize * macSize
                 for rinp_ratio in [.25, .5, .75, 1]:
@@ -67,27 +68,32 @@ for rl_type in ['PG', 'DQN']:
                     rout_size = max(1, int(rinp_size * rout_ratio))
                     for specrad in [0]:
                       for alpha in [.01, .1]:
-                        confDicts.append(hashabledict({
-                          'rl_type': rl_type,
-                          'regressor': regressor,
-                          'conv': conv,
-                          'encoder': encoder,
-                          'lr': lr,
-                          'lsm': lsm,
-                          'pmax': pmax,
-                          'macrocol': macrocol,
-                          'minicol': minicol,
-                          'specrad': specrad,
-                          'alpha': alpha,
-                          'tbs': tp['tbs'],
-                          'ti': tp['ti'],
-                          'rti': tp['rti'],
-                          'hidden': hidden,
-                          'rinp': rinp_size,
-                          'rout': rout_size,
-                          'lsm_size': reservoir_size,
-                          'pgepochs': pgepochs,
-                        }))   
+                        cq = {
+                                      'rl_type': rl_type,
+                                      'regressor': regressor,
+                                      'conv': conv,
+                                      'encoder': encoder,
+                                      'lr': lr,
+                                      'lsm': lsm,
+                                      'pmax': pmax,
+                                      'macrocol': macrocol,
+                                      'minicol': minicol,
+                                      'specrad': specrad,
+                                      'alpha': alpha,
+                                      'tbs': tp['tbs'],
+                                      'ti': tp['ti'],
+                                      'rti': tp['rti'],
+                                      'hidden': hidden,
+                                      'rinp': rinp_size,
+                                      'rout': rout_size,
+                                      'lsm_size': reservoir_size,
+                                      'pgepochs': pgepochs,
+                                    }                      
+                        confDicts.append(hashabledict(cq))
+                        for ent in [0.05]:
+                          cq_ent = cq.copy()
+                          cq_ent['ent'] = ent
+                          confDicts.append(hashabledict(cq_ent))
                       
   
 
@@ -110,6 +116,10 @@ for ii, cc in enumerate(confDicts):
   explist.append("LSM='{}'".format(cc['lsm']))
   explist.append("hidden='{}'".format(cc['hidden']))
   explist.append("pgepochs='{}'".format(cc['pgepochs']))
+  try:
+    explist.append("ent_coef='{}'".format(cc['ent']))
+  except Exception:
+    pass
   if cc['lsm']:
     explist.append("readoutinp='{}'".format(cc['rinp']))
     explist.append("readoutout='{}'".format(cc['rout']))
@@ -120,6 +130,7 @@ for ii, cc in enumerate(confDicts):
     explist.append("ALPHA='{}'".format(cc['alpha']))
   exportline = ','.join(explist)
   print(ii, command.format(exportline))
+  #---
   print('ppending', pending())
   while True:
     if pending() < 20:
