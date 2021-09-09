@@ -36,7 +36,7 @@ fname_list = []
 conf = {}
 
 #Scenario: DSS (Ch. switching), SSSD (discrete), SSSC (continuous)
-SCENARIO = get_slurm_env('str', 'SCENARIO', 'SSSD') 
+SCENARIO = get_slurm_env('str', 'SCENARIO', 'DSS') 
 fname_list.append('00{}'.format(SCENARIO))
 
 RLTYPE = get_slurm_env('str', 'RLTYPE', 'PG') #DQN, PG

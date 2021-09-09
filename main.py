@@ -49,6 +49,7 @@ success_SU = np.zeros((n_su, total_episode))
 fail_SU = np.zeros((n_su, total_episode))
 access_channel_SU = - np.ones((n_su, total_episode))
 
+power_SU = np.zeros((n_su, total_episode))
 dataRate_SU = np.zeros((n_su, total_episode))
 dataRate_PU = np.zeros((n_channel, total_episode))
 
@@ -121,7 +122,9 @@ for step in range(init_step, total_episode):
    fail_SU[:, step] = env.fail_SU
 
    access_channel_SU[:, step] = env.access_channel_SU
-
+   
+   power_SU[:, step] = env.power_SU
+   
    dataRate_SU[:, step] = env.dataRate_SU
    dataRate_PU[:, step] = env.dataRate_PU    
 
@@ -223,6 +226,7 @@ result = {'reward_SU': reward_SU,
           'access_channel_SU': access_channel_SU,
           'dataRate_SU': dataRate_SU,
           'dataRate_PU': dataRate_PU,
+          'power_SU': power_SU,
           'elapsed': elapsed,
           'device': device.type,
           'losses': losses,
