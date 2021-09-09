@@ -32,7 +32,9 @@ class DSA_Period():
 
       # Transmit power of PU and SU (mW)
       self.PU_power = 500
-      self.SU_power = 500
+      #Replaced with POWS
+      #self.SU_power = 500
+      
 
       # Background noise
       Noise_spectral_dBm = -164 # (dBm/Hz)
@@ -159,6 +161,7 @@ class DSA_Period():
       self.fail_PU = np.zeros(self.n_channel) # a SU collides with a PU and degrades PU data rate
       self.fail_SU = np.zeros(self.n_su) # a SU collides with other SUs
       self.access_SU = np.zeros(self.n_su) # the number of SUs' access
+      self.power_SU = np.zeros(self.n_su)
       self.access_channel_SU = - np.ones(self.n_su)
 
       self.reward = - np.ones(self.n_su)
@@ -176,10 +179,12 @@ class DSA_Period():
 
             # Calculate the interference between PUR/SUT
             Interferecne_PUR_SUT = np.zeros(self.subframe_per_period - self.sensed_subframe_per_period)
-            interfered_SUT = np.where(action == 2*n)[0]
+            
+            interfered_SUT = np.where(((nPOWS+1)*n <= action) & (action < (nPOWS+1)*(n+1)-1))[0]
+            #interfered_SUT = np.where(action == 2*n)[0]
             for m in interfered_SUT:
                H_PUR_SUT_power = np.absolute(self.H_PUR_SUT[n, m, time]) ** 2
-               Interferecne_PUR_SUT += H_PUR_SUT_power * self.SU_power
+               Interferecne_PUR_SUT += H_PUR_SUT_power * POWS[action[m]%(nPOWS+1)] # * self.SU_power
 
             SINR = H_PUR_PUT_power * self.PU_power / (Interferecne_PUR_SUT + self.Noise)
 
@@ -187,12 +192,15 @@ class DSA_Period():
 
       # Calculate the data rate of SU
       for k in range(self.n_su):
-         if ((action[k] % 2) == 1): # action is not accessing any channel
+         #if ((action[k] % nPOWS) == 1): # action is not accessing any channel
+         if ((action[k] % (nPOWS+1)) == nPOWS): # action is not accessing any channel
             self.dataRate_SU[k] = 0
+            self.power_SU[k] = 0
 
          else: # action is accessing one channel
 
-            access_channel = int(action[k]/2)
+            access_channel = action[k] // (nPOWS+1)
+            self.power_SU[k] = POWS[action[k] % (nPOWS+1)]
 
             self.access_channel_SU[k] = access_channel
 
@@ -200,11 +208,12 @@ class DSA_Period():
 
             # Calculate the interference between SUR/SUT
             Interferecne_SUR_SUT = np.zeros(self.subframe_per_period - self.sensed_subframe_per_period)
-            interfered_SUT = np.where(action == action[k])[0]
-            interfered_SUT = interfered_SUT[interfered_SUT != k]
+            #interfered_SUT = np.where(action == action[k])[0]
+            interfered_SUT = np.where(((nPOWS+1)*(action[k]//nPOWS) <= action) & (action < (nPOWS+1)*(action[k]//nPOWS+1)-1))[0]
+            interfered_SUT = interfered_SUT[interfered_SUT != k] # except itself
             for m in interfered_SUT:
                H_SUR_SUT_power = np.absolute(self.H_SUR_SUT[k, m, time]) ** 2
-               Interferecne_SUR_SUT += H_SUR_SUT_power * self.SU_power
+               Interferecne_SUR_SUT += H_SUR_SUT_power * POWS[action[m]%(nPOWS+1)] # * self.SU_power
 
             # Calculate the interference between SUR/PUT
             if self.channel_state[access_channel] == 1:
@@ -216,18 +225,19 @@ class DSA_Period():
             # Calculate the total interference
             Interferecne = Interferecne_SUR_SUT + Interferecne_SUR_PUT
 
-            SINR = H_SUR_SUT_power * self.SU_power / (Interferecne + self.Noise)
+            #SINR = H_SUR_SUT_power * self.SU_power / (Interferecne + self.Noise)
+            SINR = H_SUR_SUT_power * POWS[action[k]%(nPOWS+1)] / (Interferecne + self.Noise)
 
             self.dataRate_SU[k] = np.mean(self._calculate_dataRate(SINR))
 
       # Calculate the reward of SU
       for k in range(self.n_su):
-         if ((action[k] % 2) == 1):  # action is not accessing any channel
+         if ((action[k] % (nPOWS+1)) == nPOWS):  # action is not accessing any channel
             self.reward[k] = -1
             self.access_SU[k] = 0
          else:  # action is accessing one channel
 
-            access_channel = int(action[k] / 2)
+            access_channel = action[k] // (nPOWS+1) #int(action[k] / 2)
 
             self.access_SU[k] = 1
 
@@ -246,7 +256,9 @@ class DSA_Period():
                self.reward[k] = self._quantize_reward(self.dataRate_SU[k])
 
             # Check if SU collides with other SUs
-            interfered_SUT = np.where(action == action[k])[0]
+            #interfered_SUT = np.where(action == action[k])[0]
+            interfered_SUT = np.where(((nPOWS+1)*(action[k]//nPOWS) <= action) & (action < (nPOWS+1)*(action[k]//nPOWS+1)-1))[0]
+            
             interfered_SUT = interfered_SUT[interfered_SUT != k]
             if (len(interfered_SUT) > 0):
                if (self.dataRate_SU[k] / self.B) < self.SU_collision_threshold:
@@ -284,7 +296,8 @@ class DSA_Period():
 
    def render_sensor(self, action):
       active_sensor = np.zeros((self.n_su, self.n_channel)).astype(np.int32)
-      initial_sensed_channel = np.floor(action / 2).astype(np.int32)
+      #initial_sensed_channel = np.floor(action / 2).astype(np.int32)
+      initial_sensed_channel = action // (nPOWS+1)
       for k in range(self.n_su):
          active_sensor[k, initial_sensed_channel[k]] = 1
       return active_sensor

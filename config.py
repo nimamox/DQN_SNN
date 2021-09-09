@@ -35,17 +35,34 @@ def get_slurm_env(type_, name, default):
 fname_list = []
 conf = {}
 
+#Scenario: DSS (Ch. switching), SSSD (discrete), SSSC (continuous)
+SCENARIO = get_slurm_env('str', 'SCENARIO', 'SSSD') 
+fname_list.append('00{}'.format(SCENARIO))
+
 RLTYPE = get_slurm_env('str', 'RLTYPE', 'PG') #DQN, PG
 fname_list.append('01{}'.format(RLTYPE))
 conf['RLTYPE'] = RLTYPE
 
-REGRESSOR = get_slurm_env('str', 'REGRESSOR', 'SNN') #LinReg, MLP, SNN, SNN_scaled, LSM, SurrGrad
+REGRESSOR = get_slurm_env('str', 'REGRESSOR', 'LinReg') #LinReg, MLP, SNN, SNN_scaled, LSM, SurrGrad
 fname_list.append('02{}'.format(REGRESSOR))
 conf['REGRESSOR'] = REGRESSOR
 
 learning_rate = get_slurm_env('float', 'LR', '0.05')
 fname_list.append('05LR{:.4f}'.format(learning_rate))
 conf['learning_rate'] = learning_rate
+
+POWS = get_slurm_env('str', 'POWS', '100-200-300')
+POWS = list(map(int, POWS.split('-')))
+nPOWS = len(POWS)
+
+if SCENARIO in ('SSSD', 'SSSC'):
+   fname_list.append('20POW{}'.format('_'.join([str(_) for _ in POWS])))
+elif SCENARIO == 'DSS':
+   POWS = [500]
+   nPOWS = len(POWS)
+conf['POWER_LEVELS'] = POWS
+conf['POWER_LEVELS_num'] = nPOWS
+
 
 if RLTYPE == 'DQN':
    tbs = get_slurm_env('int', 'tbs', 35)
@@ -57,6 +74,7 @@ if RLTYPE == 'DQN':
    rti = get_slurm_env('int', 'rti', 30)
    fname_list.append('08rti{}'.format(rti))
    conf['rti'] = rti
+   
 elif RLTYPE == 'PG':
    pgepochs= get_slurm_env('int', 'pgepochs', 5)
    fname_list.append('09pgepochs{}'.format(pgepochs))
@@ -78,7 +96,7 @@ if REGRESSOR in ['LinReg', 'MLP']:
    conf['USE_LSM'] = False
    
 elif REGRESSOR in ['SurrGrad', 'SNN']:
-   ENCODER = get_slurm_env('str', 'ENCODER', 'ISI')
+   ENCODER = get_slurm_env('str', 'ENCODER', 'ISI') # Poisson, ISI, Phase+ISI
    fname_list.append('03{}'.format(ENCODER))
    conf['ENCODER'] = ENCODER
    #-

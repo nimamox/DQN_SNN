@@ -144,7 +144,7 @@ class RL_Agent():
                self.snn_params['dim_in'] = 6
 
          self.snn_params['T_sim'] = 10
-         self.policy_net, self.surr_alpha, self.surr_beta = init_model(self.snn_params['dim_in'], hidden, 8, .05)
+         self.policy_net, self.surr_alpha, self.surr_beta = init_model(self.snn_params['dim_in'], hidden, self.n_actions, .05)
          self.optimizer = optim.Adam(self.policy_net, lr=self.lr, betas=(0.9, 0.999)) #TODO: learning rate
          self.all_obs_spikes = []
          
@@ -162,7 +162,7 @@ class RL_Agent():
             'T_sim': 10,   # could control total spike number collected
             'dim_in': 5,
             'dim_h': hidden,
-            'dim_out': 8,
+            'dim_out': self.n_actions,
             'epoch': 10,
 
             'W_std1': 1.0,
@@ -238,7 +238,7 @@ class RL_Agent():
                self.snn_params['dim_in'] = 6
 
          self.snn_params['T_sim'] = 10
-         self.eval_net, self.surr_alpha, self.surr_beta = init_model(self.snn_params['dim_in'], hidden, 8, .05)
+         self.eval_net, self.surr_alpha, self.surr_beta = init_model(self.snn_params['dim_in'], hidden, self.n_actions, .05)
          self.target_net = []
          for vv in self.eval_net:
             self.target_net.append(vv.clone())
@@ -259,7 +259,7 @@ class RL_Agent():
             'T_sim': 10,   # could control total spike number collected
             'dim_in': 5,
             'dim_h': hidden,
-            'dim_out': 8,
+            'dim_out': self.n_actions,
             'epoch': 10,
 
             'W_std1': 1.0,
@@ -411,6 +411,10 @@ class RL_Agent():
          ed = encode_data(X, X, nb_units=X.shape[1], encoder_type="ISI_inverse", batch_size=X.shape[0], nb_steps=10, TMAX=10, external_ISI_cache=ISI_external_cache)
          ft = next(sparse_generator(ed, shuffle=False))[0]
          return torch.einsum('ijk->ikj', ft.to_dense())
+      elif ENCODER == 'Phase+ISI':
+         ed = encode_data(X, X, nb_units=X.shape[1], encoder_type="Phase+ISI_inverse", batch_size=X.shape[0], nb_steps=10, TMAX=10, external_ISI_cache=ISI_external_cache, smo_freq=500)
+         ft = next(sparse_generator(ed, shuffle=False))[0]
+         return torch.einsum('ijk->ikj', ft.to_dense())         
       else:
          raise Exception('Invalid Encoding')
 

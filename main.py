@@ -17,7 +17,12 @@ def set_seed(seed):
 
 set_seed(1337)
 
-dim_actions = n_channel * 2  # The action space size
+
+if SCENARIO in ('DSS', 'SSSD'):
+   dim_actions = n_channel * (nPOWS + 1) # The action space size
+else:
+   raise Exception('Invalid Scenario')
+
 dim_states = n_channel + 1  # The sensing result space
 
 batch_size = 300
@@ -38,6 +43,7 @@ reward_SU = np.zeros((n_su, total_episode))
 access_PU = np.zeros((n_channel, total_episode))
 fail_PU = np.zeros((n_channel, total_episode))
 
+power_SU = np.zeros((n_su, total_episode))
 access_SU = np.zeros((n_su, total_episode))
 success_SU = np.zeros((n_su, total_episode))
 fail_SU = np.zeros((n_su, total_episode))
