@@ -36,8 +36,11 @@ fname_list = []
 conf = {}
 
 #Scenario: DSS (Ch. switching), SSSD (discrete), SSSC (continuous)
-SCENARIO = get_slurm_env('str', 'SCENARIO', 'DSS') 
+SCENARIO = get_slurm_env('str', 'SCENARIO', 'SSSD') 
 fname_list.append('00{}'.format(SCENARIO))
+
+REW_TYPE = get_slurm_env('str', 'REW_TYPE', 'PowPenalty') # Orig, PowPenalty
+fname_list.append('21{}'.format(REW_TYPE))
 
 RLTYPE = get_slurm_env('str', 'RLTYPE', 'PG') #DQN, PG
 fname_list.append('01{}'.format(RLTYPE))
@@ -62,6 +65,7 @@ elif SCENARIO == 'DSS':
    nPOWS = len(POWS)
 conf['POWER_LEVELS'] = POWS
 conf['POWER_LEVELS_num'] = nPOWS
+powPenalty = torch.hstack([torch.linspace(0, 1, nPOWS+1)[1:], torch.Tensor([0])]).tolist()
 
 
 if RLTYPE == 'DQN':

@@ -251,9 +251,13 @@ class DSA_Period():
                else:
                   self.fail_PU[access_channel] = 0
                   self.reward[k] = self._quantize_reward(self.dataRate_SU[k])
+                  if REW_TYPE == 'PowPenalty':
+                     self.reward[k] -= powPenalty[action[k]%(nPOWS+1)]
             else:
                self.fail_PU[access_channel] = 0
                self.reward[k] = self._quantize_reward(self.dataRate_SU[k])
+               if REW_TYPE == 'PowPenalty':
+                  self.reward[k] -= powPenalty[action[k]%(nPOWS+1)]               
 
             # Check if SU collides with other SUs
             #interfered_SUT = np.where(action == action[k])[0]

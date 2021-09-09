@@ -232,7 +232,9 @@ result = {'reward_SU': reward_SU,
           'elapsed': elapsed,
           'device': device.type,
           'losses': losses,
-          'conf': conf
+          'conf': conf,
+          'SCENARIO': SCENARIO,
+          'REW_TYPE': REW_TYPE,
           }
 
 hkl.dump(result, os.path.join(RESULT_PATH, '{}_PU{}_SU{}.hkl'.format(FNAME, n_channel, n_su)))
