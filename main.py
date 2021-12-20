@@ -20,6 +20,8 @@ set_seed(1337)
 
 if SCENARIO in ('DSS', 'SSSD'):
    dim_actions = n_channel * (nPOWS + 1) # The action space size
+elif SCENARIO == 'SSSC':
+   dim_actions = n_channel
 else:
    raise Exception('Invalid Scenario')
 

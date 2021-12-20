@@ -46,7 +46,7 @@ RLTYPE = get_slurm_env('str', 'RLTYPE', 'PG') #DQN, PG
 fname_list.append('01{}'.format(RLTYPE))
 conf['RLTYPE'] = RLTYPE
 
-REGRESSOR = get_slurm_env('str', 'REGRESSOR', 'LinReg') #LinReg, MLP, SNN, SNN_scaled, LSM, SurrGrad
+REGRESSOR = get_slurm_env('str', 'REGRESSOR', 'MLP') #LinReg, MLP, SNN, SNN_scaled, LSM, SurrGrad
 fname_list.append('02{}'.format(REGRESSOR))
 conf['REGRESSOR'] = REGRESSOR
 
