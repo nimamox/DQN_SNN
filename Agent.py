@@ -9,19 +9,19 @@ import time
 from torch import nn
 import torch.nn.functional as F
 
-#import NeuralEncBenchmark
-#from NeuralEncBenchmark.ttfs import TTFS_encoder
-#from NeuralEncBenchmark.isi import ISI_encoding
-#from NeuralEncBenchmark.multiplexing_ttfs import multiplexing_encoding_TTFS_phase
-#from NeuralEncBenchmark.multiplexing_isi import multiplexing_encoding_ISI_phase
-#from NeuralEncBenchmark.datasets import *
+import NeuralEncBenchmark
+from NeuralEncBenchmark.ttfs import TTFS_encoder
+from NeuralEncBenchmark.isi import ISI_encoding
+from NeuralEncBenchmark.multiplexing_ttfs import multiplexing_encoding_TTFS_phase
+from NeuralEncBenchmark.multiplexing_isi import multiplexing_encoding_ISI_phase
+from NeuralEncBenchmark.datasets import *
 
-#from NeuralEncBenchmark.torch_device import dtype
-#from NeuralEncBenchmark.sparse_data_generator import sparse_generator
-#from NeuralEncBenchmark.surrogate_encoder import encode_data
+from NeuralEncBenchmark.torch_device import dtype
+from NeuralEncBenchmark.sparse_data_generator import sparse_generator
+from NeuralEncBenchmark.surrogate_encoder import encode_data
 
-#from NeuralEncBenchmark.surrogate_model import run_snn
-#from NeuralEncBenchmark.surrogate_train import init_model, compute_classification_accuracy, train
+from NeuralEncBenchmark.surrogate_model import run_snn
+from NeuralEncBenchmark.surrogate_train import init_model, compute_classification_accuracy, train
 
 import sys
 sys.path.append('PCRITICAL')
